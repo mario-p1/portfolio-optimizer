@@ -22,18 +22,20 @@ def get_ticker_details(ticker_key):
 
 
 if "n_tickers" not in st.session_state:
-    st.session_state.n_tickers = 3
+    st.session_state.n_tickers = 4
 
     st.session_state.ticker_0 = "IUSQ.DE"
     st.session_state.allocation_0 = 50
     st.session_state.ticker_1 = "EUNL.DE"
-    st.session_state.allocation_1 = 40
+    st.session_state.allocation_1 = 30
     st.session_state.ticker_2 = "IUSN.DE"
     st.session_state.allocation_2 = 10
+    st.session_state.ticker_3 = "EUNM.DE"
+    st.session_state.allocation_3 = 10
 
-st.title("Portfolio Optimizer")
+"# Portfolio Optimizer"
 
-st.header("Portfolio Configuration")
+"## Portfolio Configuration"
 input_left_col, input_right_col = st.columns(2)
 with input_left_col:
     for i in range(st.session_state.n_tickers):
@@ -54,9 +56,8 @@ allocation_sum = sum(
 if allocation_sum != 100:
     st.error("Sum of allocation accross all assets must be 100")
 
-st.header("Growth of 10.000 € Investment")
-st.subheader("Performance of 10.000 € Invested in Each Asset")
-
+"## Growth of 10.000 € Investment"
+"### Performance of 10.000 € Invested in Each Asset"
 
 prices_df = pd.DataFrame()
 
@@ -64,7 +65,7 @@ for i in range(st.session_state["n_tickers"]):
     ticker_key = f"ticker_{i}"
     if st.session_state[ticker_key]:
         ticker = st.session_state[ticker_key]
-        history = get_price_history(ticker)
+        history = get_price_history(ticker)["Close"].to_frame()
 
         name, currency = get_ticker_details(ticker_key)
 
@@ -72,7 +73,13 @@ for i in range(st.session_state["n_tickers"]):
             history["Close"], left_index=True, right_index=True, how="outer"
         ).rename(columns={"Close": name})
 
+        f"#### {name}"
+        indv_chart_df = history["Close"] * 10_000 / history.iloc[0]["Close"]
+        st.line_chart(downsample_df(indv_chart_df))
 
+"### Comparative Asset Performance"
+"""Each asset receives 10.000 €, invested at the same time,
+beginning from the newest fund's starting date."""
 indv_growth_df = prices_df.dropna(how="any")
 indv_growth_df = downsample_df(indv_growth_df)
 for column in indv_growth_df.columns:
