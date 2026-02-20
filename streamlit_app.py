@@ -1,6 +1,15 @@
 import pandas as pd
 import streamlit as st
 import yfinance as yf
+import plotly.express as px
+
+
+@st.cache_data
+def check_ticker_exists(ticker: str) -> bool:
+    if "longName" in yf.Ticker(ticker).get_info().keys():
+        return True
+
+    return False
 
 
 @st.cache_data
@@ -15,8 +24,9 @@ def downsample_df(df: pd.DataFrame, factor: int = 15) -> pd.DataFrame:
     return df.iloc[range(0, len(df), factor)].copy()
 
 
-def get_ticker_details(ticker_key):
-    data = yf.Ticker(st.session_state[ticker_key]).get_info()
+@st.cache_data
+def get_ticker_details(ticker):
+    data = yf.Ticker(ticker).get_info()
 
     return data["longName"], data["currency"]
 
@@ -50,32 +60,45 @@ if st.button("Add Asset"):
     st.session_state.n_tickers += 1
     st.rerun()
 
-allocation_sum = sum(
-    [st.session_state[f"allocation_{i}"] for i in range(st.session_state.n_tickers)]
-)
-if allocation_sum != 100:
+
+portfolio_items = []
+for i in range(st.session_state.n_tickers):
+    ticker = st.session_state[f"ticker_{i}"]
+    allocation = st.session_state[f"allocation_{i}"]
+
+    if check_ticker_exists(ticker):
+        portfolio_items.append({"ticker": ticker, "allocation": allocation})
+    else:
+        st.error(f"Ticker {ticker} does not exist")
+        st.stop()
+
+portfolio_df = pd.DataFrame.from_dict(portfolio_items)
+
+if portfolio_df["allocation"].sum() != 100:
     st.error("Sum of allocation accross all assets must be 100")
+    st.stop()
 
 "## Growth of 10.000 € Investment"
-"### Performance of 10.000 € Invested in Each Asset"
+# "### Performance of 10.000 € Invested in Each Asset"
 
 prices_df = pd.DataFrame()
 
+# TODO: Rewrite using portfolio df
 for i in range(st.session_state["n_tickers"]):
     ticker_key = f"ticker_{i}"
     if st.session_state[ticker_key]:
         ticker = st.session_state[ticker_key]
         history = get_price_history(ticker)["Close"].to_frame()
 
-        name, currency = get_ticker_details(ticker_key)
+        name, currency = get_ticker_details(ticker)
 
         prices_df = prices_df.merge(
             history["Close"], left_index=True, right_index=True, how="outer"
         ).rename(columns={"Close": name})
 
-        f"#### {name}"
-        indv_chart_df = history["Close"] * 10_000 / history.iloc[0]["Close"]
-        st.line_chart(downsample_df(indv_chart_df))
+        # f"#### {name}"
+        # indv_chart_df = history["Close"] * 10_000 / history.iloc[0]["Close"]
+        # st.line_chart(downsample_df(indv_chart_df))
 
 "### Comparative Asset Performance"
 """Each asset receives 10.000 €, invested at the same time,
@@ -90,3 +113,9 @@ for column in indv_growth_df.columns:
 indv_growth_df = indv_growth_df.round(0)
 
 st.line_chart(indv_growth_df, y_label=f"Portfolio Value ({currency})")
+
+"## Portfolio"
+"### Assets"
+fig = px.pie(portfolio_df, values="allocation", names="ticker", hole=0.3)
+fig.update_traces(textinfo="label+percent")
+st.plotly_chart(fig)
