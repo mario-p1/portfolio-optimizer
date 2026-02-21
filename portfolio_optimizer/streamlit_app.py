@@ -8,17 +8,18 @@ from portfolio_optimizer.portfolio_metrics import (
     compute_portfolio_growth_index,
 )
 
-fig_layout = dict(
-    hovermode="x unified",
-    legend=dict(
-        title="",
-        orientation="h",
-        yanchor="top",
-        y=-0.2,
-        xanchor="center",
-        x=0.5,
-    ),
-)
+fig_layout = {
+    "hovermode": "x unified",
+    "legend": {
+        "title": "",
+        "orientation": "h",
+        "yanchor": "top",
+        "y": -0.2,
+        "xanchor": "center",
+        "x": 0.5,
+    },
+}
+
 
 if "n_tickers" not in st.session_state:
     st.session_state.n_tickers = 4
@@ -83,7 +84,7 @@ st.dataframe(
     portfolio_df[["ticker", "name", "currency", "allocation"]], hide_index=True
 )
 
-"## Growth of 10.000 € Investment"
+"## Growth Index"
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 
@@ -92,7 +93,7 @@ prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 beginning from the newest fund's starting date."""
 indv_perf_df = compute_asset_growth_index(prices_df, portfolio_df)
 
-fig = px.line(indv_perf_df, labels=dict(variable="Asset", value="Value"))
+fig = px.line(indv_perf_df, labels={"variable": "Asset", "value": "Value"})
 fig.update_layout(**fig_layout)
 
 st.plotly_chart(fig)
@@ -104,4 +105,24 @@ port_perf_df = compute_portfolio_growth_index(prices_df, portfolio_df)
 fig = px.line(port_perf_df)
 fig.update_layout(**fig_layout, showlegend=False)
 
+st.plotly_chart(fig)
+
+"## Returns"
+"### Annual Returns"
+annual_returns_df = port_perf_df.resample("Y").last().pct_change().dropna() * 100
+annual_returns_df.columns = ["annual_return"]
+annual_returns_df["Sign"] = (
+    annual_returns_df["annual_return"].ge(0).map({True: "Positive", False: "Negative"})
+)
+
+
+fig = px.bar(
+    annual_returns_df,
+    x=annual_returns_df.index.year,
+    y="annual_return",
+    labels={"x": "Year", "annual_return": "Annual Return (%)"},
+    color="Sign",
+    color_discrete_map={"Positive": "green", "Negative": "red"},
+)
+fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
