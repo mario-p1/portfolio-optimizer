@@ -26,7 +26,9 @@ def get_prices_df(tickers: list[str]) -> pd.DataFrame:
     prices_df = pd.DataFrame()
     for ticker in tickers:
         history = get_price_history(ticker)["Close"].to_frame().reset_index(drop=False)
-        history = history.resample("M", on="Date").last()
+
+        history["Date"] = history["Date"].dt.tz_convert(None)
+        history = history.resample("ME", on="Date").last()
 
         prices_df = prices_df.merge(
             history["Close"], left_index=True, right_index=True, how="outer"
