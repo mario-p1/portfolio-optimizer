@@ -1,44 +1,9 @@
 import pandas as pd
 import streamlit as st
-import yfinance as yf
 import plotly.express as px
 
-
-@st.cache_data
-def get_ticker_details(ticker):
-    data = yf.Ticker(ticker).get_info()
-
-    if "longName" not in data.keys():
-        raise ValueError(f"Ticker '{ticker}' doesn't exist.")
-
-    return {"name": data["longName"], "currency": data["currency"]}
-
-
-@st.cache_data
-def get_price_history(ticker: str) -> pd.DataFrame:
-    yticker = yf.Ticker(ticker)
-
-    history_df = yticker.history(period="max", interval="1mo")
-    return history_df
-
-
-def get_prices_df(tickers: list[str]) -> pd.DataFrame:
-    prices_df = pd.DataFrame()
-    for ticker in tickers:
-        history = get_price_history(ticker)["Close"].to_frame().reset_index(drop=False)
-        history["Date"] = history["Date"].dt.date
-        history = history.set_index("Date")
-
-        prices_df = prices_df.merge(
-            history["Close"], left_index=True, right_index=True, how="outer"
-        ).rename(columns={"Close": ticker})
-
-    return prices_df
-
-
-def replace_tickers_columns(df: pd.DataFrame, ticker_df: pd.DataFrame) -> pd.DataFrame:
-    names_dict = ticker_df.set_index("ticker")["name"].to_dict()
-    return df.rename(columns=names_dict)
+from portfolio_optimizer.utils import replace_tickers_columns
+from portfolio_optimizer.market_data_service import get_prices_df, get_ticker_details
 
 
 if "n_tickers" not in st.session_state:
