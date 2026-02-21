@@ -18,17 +18,27 @@ def get_ticker_details(ticker):
 def get_price_history(ticker: str) -> pd.DataFrame:
     yticker = yf.Ticker(ticker)
 
-    history_df = yticker.history(period="max")
+    history_df = yticker.history(period="max", interval="1mo")
     return history_df
+
+
+def get_prices_df(tickers: list[str]) -> pd.DataFrame:
+    prices_df = pd.DataFrame()
+    for ticker in tickers:
+        history = get_price_history(ticker)["Close"].to_frame().reset_index(drop=False)
+        history["Date"] = history["Date"].dt.date
+        history = history.set_index("Date")
+
+        prices_df = prices_df.merge(
+            history["Close"], left_index=True, right_index=True, how="outer"
+        ).rename(columns={"Close": ticker})
+
+    return prices_df
 
 
 def replace_tickers_columns(df: pd.DataFrame, ticker_df: pd.DataFrame) -> pd.DataFrame:
     names_dict = ticker_df.set_index("ticker")["name"].to_dict()
     return df.rename(columns=names_dict)
-
-
-def downsample_df(df: pd.DataFrame, factor: int = 15) -> pd.DataFrame:
-    return df.iloc[range(0, len(df), factor)].copy()
 
 
 if "n_tickers" not in st.session_state:
@@ -95,21 +105,8 @@ st.dataframe(
 )
 
 "## Growth of 10.000 € Investment"
-# "### Performance of 10.000 € Invested in Each Asset"
 
-prices_df = pd.DataFrame()
-
-# TODO: Rewrite using portfolio df
-for portfolio_item in portfolio_df.itertuples(index=False):
-    history = get_price_history(portfolio_item.ticker)["Close"].to_frame()
-
-    prices_df = prices_df.merge(
-        history["Close"], left_index=True, right_index=True, how="outer"
-    ).rename(columns={"Close": portfolio_item.ticker})
-
-    # f"#### {name}"
-    # indv_chart_df = history["Close"] * 10_000 / history.iloc[0]["Close"]
-    # st.line_chart(downsample_df(indv_chart_df))
+prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 
 "### Comparative Asset Performance"
 """Each asset receives 10.000 €, invested at the same time,
@@ -117,11 +114,9 @@ beginning from the newest fund's starting date."""
 indv_growth_df = prices_df.dropna(how="any")
 indv_growth_df = replace_tickers_columns(indv_growth_df, portfolio_df)
 
-indv_growth_df = downsample_df(indv_growth_df)
+
 for column in indv_growth_df.columns:
-    shares_10k = (
-        10_000 / indv_growth_df.loc[indv_growth_df[column].first_valid_index(), column]
-    )
+    shares_10k = 10_000 / indv_growth_df[column].iloc[0]
     indv_growth_df[column] = indv_growth_df[column] * shares_10k
 indv_growth_df = indv_growth_df.round(0)
 
