@@ -127,12 +127,12 @@ st.plotly_chart(fig)
 
 
 "### Annual Returns Count"
-min_annual_return = int(annual_returns_df["annual_return"].min() / 10 - 1) * 10
-max_annual_return = int(annual_returns_df["annual_return"].max() / 10 + 1) * 10
+bin_by = 5
+min_annual_return = int(annual_returns_df["annual_return"].min() / bin_by - 1) * bin_by
+max_annual_return = int(annual_returns_df["annual_return"].max() / bin_by + 1) * bin_by
 
 bin_region = max(abs(min_annual_return), abs(max_annual_return))
 
-bin_by = 5
 bins = list(range(-bin_region, bin_region + bin_by, bin_by))
 
 annual_bins = (
