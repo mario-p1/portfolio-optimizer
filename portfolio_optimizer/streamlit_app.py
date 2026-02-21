@@ -84,4 +84,18 @@ for column in indv_growth_df.columns:
     indv_growth_df[column] = indv_growth_df[column] * shares_10k
 indv_growth_df = indv_growth_df.round(0)
 
-st.line_chart(indv_growth_df, y_label="Portfolio Value (€)")
+
+fig = px.line(indv_growth_df, labels=dict(variable="Asset", value="Value"))
+fig.update_layout(
+    hovermode="x unified",
+    legend=dict(
+        title="",
+        orientation="h",
+        yanchor="top",
+        y=-0.2,
+        xanchor="center",
+        x=0.5,
+    ),
+)
+
+st.plotly_chart(fig)
