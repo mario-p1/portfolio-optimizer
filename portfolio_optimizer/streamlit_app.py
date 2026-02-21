@@ -1,10 +1,9 @@
 import pandas as pd
-import streamlit as st
 import plotly.express as px
+import streamlit as st
 
-from portfolio_optimizer.utils import replace_tickers_columns
 from portfolio_optimizer.market_data_service import get_prices_df, get_ticker_details
-
+from portfolio_optimizer.utils import replace_tickers_columns
 
 if "n_tickers" not in st.session_state:
     st.session_state.n_tickers = 4
