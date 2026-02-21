@@ -3,7 +3,22 @@ import plotly.express as px
 import streamlit as st
 
 from portfolio_optimizer.market_data_service import get_prices_df, get_ticker_details
-from portfolio_optimizer.utils import replace_tickers_columns
+from portfolio_optimizer.portfolio_metrics import (
+    compute_asset_growth_index,
+    compute_portfolio_growth_index,
+)
+
+fig_layout = dict(
+    hovermode="x unified",
+    legend=dict(
+        title="",
+        orientation="h",
+        yanchor="top",
+        y=-0.2,
+        xanchor="center",
+        x=0.5,
+    ),
+)
 
 if "n_tickers" not in st.session_state:
     st.session_state.n_tickers = 4
@@ -75,27 +90,18 @@ prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 "### Comparative Asset Performance"
 """Each asset receives 10.000 €, invested at the same time,
 beginning from the newest fund's starting date."""
-indv_growth_df = prices_df.dropna(how="any")
-indv_growth_df = replace_tickers_columns(indv_growth_df, portfolio_df)
+indv_perf_df = compute_asset_growth_index(prices_df, portfolio_df)
 
+fig = px.line(indv_perf_df, labels=dict(variable="Asset", value="Value"))
+fig.update_layout(**fig_layout)
 
-for column in indv_growth_df.columns:
-    shares_10k = 10_000 / indv_growth_df[column].iloc[0]
-    indv_growth_df[column] = indv_growth_df[column] * shares_10k
-indv_growth_df = indv_growth_df.round(0)
+st.plotly_chart(fig)
 
-
-fig = px.line(indv_growth_df, labels=dict(variable="Asset", value="Value"))
-fig.update_layout(
-    hovermode="x unified",
-    legend=dict(
-        title="",
-        orientation="h",
-        yanchor="top",
-        y=-0.2,
-        xanchor="center",
-        x=0.5,
-    ),
-)
+"### Portfolio Performance"
+"""Your portfolio receives 10.000 €, invested at the beggining from the newest fund's starting date.
+The growth of the portfolio is calculated as the weighted average of the growth of each asset, according to the allocation you defined."""
+port_perf_df = compute_portfolio_growth_index(prices_df, portfolio_df)
+fig = px.line(port_perf_df)
+fig.update_layout(**fig_layout, showlegend=False)
 
 st.plotly_chart(fig)
