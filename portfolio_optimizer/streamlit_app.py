@@ -109,7 +109,7 @@ st.plotly_chart(fig)
 
 "## Returns"
 "### Annual Returns"
-annual_returns_df = port_perf_df.resample("Y").last().pct_change().dropna() * 100
+annual_returns_df = port_perf_df.resample("YE").last().pct_change().dropna() * 100
 annual_returns_df.columns = ["annual_return"]
 annual_returns_df["Sign"] = (
     annual_returns_df["annual_return"].ge(0).map({True: "Positive", False: "Negative"})
@@ -118,11 +118,49 @@ annual_returns_df["Sign"] = (
 
 fig = px.bar(
     annual_returns_df,
-    x=annual_returns_df.index.year,
-    y="annual_return",
-    labels={"x": "Year", "annual_return": "Annual Return (%)"},
     color="Sign",
     color_discrete_map={"Positive": "green", "Negative": "red"},
+    labels={"Date": "Year", "value": "Annual Return Rate (%)"},
 )
 fig.update_layout(showlegend=False)
+st.plotly_chart(fig)
+
+
+"### Annual Returns Count"
+min_annual_return = int(annual_returns_df["annual_return"].min() / 10 - 1) * 10
+max_annual_return = int(annual_returns_df["annual_return"].max() / 10 + 1) * 10
+
+bin_region = max(abs(min_annual_return), abs(max_annual_return))
+
+bin_by = 5
+bins = list(range(-bin_region, bin_region + bin_by, bin_by))
+
+annual_bins = (
+    pd.cut(annual_returns_df["annual_return"], bins=bins, labels=bins[:-1])
+    .value_counts()
+    .sort_index()
+    .to_frame()
+    .reset_index()
+)
+
+annual_bins["sign"] = (
+    annual_bins["annual_return"].ge(0).map({True: "Positive", False: "Negative"})
+)
+annual_bins["label"] = annual_bins["annual_return"].map(
+    lambda x: f"{x} to {x + bin_by} %"
+)
+
+
+fig = px.bar(
+    annual_bins,
+    x="label",
+    y="count",
+    color="sign",
+    color_discrete_map={"Positive": "green", "Negative": "red"},
+    labels={"count": "Number of Years", "label": "Annual Return Range (%)"},
+)
+
+
+fig.update_layout(showlegend=False)
+
 st.plotly_chart(fig)
