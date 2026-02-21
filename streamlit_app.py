@@ -84,7 +84,7 @@ if portfolio_df["allocation"].sum() != 100:
 "## Portfolio"
 "### Assets"
 # portfolio pie chart
-fig = px.pie(portfolio_df, values="allocation", names="ticker", hole=0.3)
+fig = px.pie(portfolio_df, values="allocation", names="name", hole=0.3)
 fig.update_traces(textinfo="label+percent")
 fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
