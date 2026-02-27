@@ -21,51 +21,46 @@ fig_layout = {
 }
 
 
-if "n_tickers" not in st.session_state:
-    st.session_state.n_tickers = 4
-
-    st.session_state.ticker_0 = "IUSQ.DE"
-    st.session_state.allocation_0 = 50
-    st.session_state.ticker_1 = "EUNL.DE"
-    st.session_state.allocation_1 = 30
-    st.session_state.ticker_2 = "IUSN.DE"
-    st.session_state.allocation_2 = 10
-    st.session_state.ticker_3 = "EUNM.DE"
-    st.session_state.allocation_3 = 10
-
-"# Portfolio Optimizer"
-
-"## Portfolio Configuration"
-input_left_col, input_right_col = st.columns(2)
-with input_left_col:
-    for i in range(st.session_state.n_tickers):
-        st.text_input("Ticker", key=f"ticker_{i}")
-with input_right_col:
-    for i in range(st.session_state.n_tickers):
-        st.number_input(
-            "Allocation (%)", min_value=0, max_value=100, key=f"allocation_{i}"
-        )
-
-if st.button("Add Asset"):
-    st.session_state.n_tickers += 1
-    st.rerun()
-
+if "tickers" not in st.session_state:
+    st.session_state.tickers = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
+    st.session_state["allocation_IUSQ.DE"] = 50
+    st.session_state["allocation_EUNL.DE"] = 30
+    st.session_state["allocation_IUSN.DE"] = 10
+    st.session_state["allocation_EUNM.DE"] = 10
 
 portfolio_items = []
-for i in range(st.session_state.n_tickers):
-    ticker = st.session_state[f"ticker_{i}"]
-    allocation = st.session_state[f"allocation_{i}"]
-
+for i, item in enumerate(st.session_state.tickers.split(";")):
     try:
-        ticker_data = get_ticker_details(ticker)
-        portfolio_items.append(
-            {"ticker": ticker, "allocation": allocation, **ticker_data}
-        )
+        ticker_data = get_ticker_details(item)
+        portfolio_items.append({"ticker": item, **ticker_data})
     except Exception as e:
         st.error(e)
         st.stop()
 
 portfolio_df = pd.DataFrame.from_dict(portfolio_items)
+
+"# Portfolio Optimizer"
+
+"## Portfolio Configuration"
+
+st.text_input("Tickers present in your portfolio (separated by ';')", key="tickers")
+
+columns = st.columns(2)
+
+for item in portfolio_df.itertuples():
+    col = columns[item.Index % 2]
+    with col:
+        st.number_input(
+            f"Allocation of '{item.ticker}' (%)",
+            min_value=0,
+            max_value=100,
+            key=f"allocation_{item.ticker}",
+        )
+
+
+portfolio_df["allocation"] = portfolio_df["ticker"].map(
+    lambda ticker: st.session_state[f"allocation_{ticker}"]
+)
 
 if portfolio_df["allocation"].sum() != 100:
     st.error("Sum of allocation accross all assets must be 100")
