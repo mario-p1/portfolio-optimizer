@@ -110,12 +110,13 @@ annual_returns_df["Sign"] = (
     annual_returns_df["annual_return"].ge(0).map({True: "Positive", False: "Negative"})
 )
 
-
 fig = px.bar(
     annual_returns_df,
+    x=annual_returns_df.index.year,
+    y="annual_return",
     color="Sign",
     color_discrete_map={"Positive": "green", "Negative": "red"},
-    labels={"Date": "Year", "value": "Annual Return Rate (%)"},
+    labels={"value": "Annual Return Rate (%)", "Date": "Year"},
 )
 fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
