@@ -171,4 +171,4 @@ st.plotly_chart(fig)
 "### Risk-Free Return"
 interest_rates_df = load_risk_free_rates()
 
-"TODO: Interest rates df returns annual rates, convert to monthly or convert portfolio performance to annual returns"
+st.write(interest_rates_df)
