@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from portfolio_optimizer.interest_data_service import load_risk_free_rates
 from portfolio_optimizer.market_data_service import get_prices_df, get_ticker_details
 from portfolio_optimizer.portfolio_metrics import (
     compute_asset_growth_index,
@@ -146,7 +147,7 @@ annual_bins = (
 )
 
 annual_bins["sign"] = (
-    annual_bins["annual_return"].ge(0).map({True: "Positive", False: "Negative"})
+    annual_bins["annual_return"].ge(0).map({True: "positive", False: "negative"})
 )
 annual_bins["label"] = annual_bins["annual_return"].map(
     lambda x: f"{x} to {x + bin_by} %"
@@ -166,3 +167,26 @@ fig = px.bar(
 fig.update_layout(showlegend=False)
 
 st.plotly_chart(fig)
+
+"### Risk-Free Return"
+interest_rates_df = load_risk_free_rates()
+
+performance_rates_df = portfolio_performance_df.copy()
+
+performance_rates_df["return_rate"] = (
+    performance_rates_df["portfolio_value"].pct_change() * 100
+)
+performance_rates_df = performance_rates_df.drop(columns=["portfolio_value"])
+
+performance_rates_df = (
+    performance_rates_df.join(interest_rates_df, how="inner")
+    .dropna()
+    .rename(columns={"value": "risk_free_rate"})
+)
+
+performance_rates_df["excess_return"] = (
+    performance_rates_df["return_rate"] - performance_rates_df["risk_free_rate"]
+)
+
+st.write(performance_rates_df)
+st.line_chart(performance_rates_df)
