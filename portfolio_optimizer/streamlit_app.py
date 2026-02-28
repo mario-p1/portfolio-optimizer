@@ -170,26 +170,36 @@ fig.update_layout(showlegend=False)
 
 st.plotly_chart(fig)
 
-"### Risk-Free Return"
-interest_rates_df = load_risk_free_rates()
-
-performance_rate_df = portfolio_performance_df.copy()
-
-performance_rate_df = performance_rate_df.resample("YE").last()
-performance_rate_df["return_rate"] = performance_rate_df["portfolio_value"].pct_change()
-performance_rate_df = performance_rate_df.join(interest_rates_df, how="inner").dropna()
-performance_rate_df["excess_return_rate"] = (
-    performance_rate_df["return_rate"] - performance_rate_df["annual_rate"]
+"### Excess Return Rate vs Risk-Free Rate"
+interest_rates_df = load_risk_free_rates().rename(
+    columns={"annual_rate": "risk_free_annual_rate"}
 )
 
-fig_df = performance_rate_df[
-    ["return_rate", "annual_rate", "excess_return_rate"]
-].rename(
-    columns={
-        "return_rate": "Portfolio Return Rate",
-        "annual_rate": "Risk-Free Annual Rate",
-        "excess_return_rate": "Excess Return Rate",
-    }
+annual_rates_df = annual_returns_df.copy().rename(
+    columns={"annual_return": "portfolio_return"}
+)
+annual_rates_df["portfolio_return"] = annual_rates_df["portfolio_return"].div(100)
+
+annual_rates_df = annual_rates_df.join(interest_rates_df, how="inner").dropna()
+annual_rates_df["excess_return_rate"] = (
+    annual_rates_df["portfolio_return"] - annual_rates_df["risk_free_annual_rate"]
+)
+
+annual_rates_df = annual_rates_df[
+    annual_rates_df.index.year < datetime.datetime.now().year
+]
+
+fig_df = (
+    annual_rates_df[
+        ["portfolio_return", "risk_free_annual_rate", "excess_return_rate"]
+    ].rename(
+        columns={
+            "portfolio_return": "Portfolio Return Rate",
+            "risk_free_annual_rate": "Risk-Free Annual Rate",
+            "excess_return_rate": "Excess Return Rate",
+        }
+    )
+    * 100
 )
 fig = px.line(
     fig_df,
@@ -203,3 +213,12 @@ fig = px.line(
 )
 fig.update_layout(**fig_layout)
 st.plotly_chart(fig)
+
+
+sharpe_ratio = (
+    annual_rates_df["excess_return_rate"].mean()
+    / annual_rates_df["portfolio_return"].std()
+)
+
+
+f"#### Sharpe Ratio: {sharpe_ratio:.2f}"
