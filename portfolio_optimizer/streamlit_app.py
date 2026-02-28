@@ -1,3 +1,5 @@
+import datetime
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -171,4 +173,33 @@ st.plotly_chart(fig)
 "### Risk-Free Return"
 interest_rates_df = load_risk_free_rates()
 
-st.write(interest_rates_df)
+performance_rate_df = portfolio_performance_df.copy()
+
+performance_rate_df = performance_rate_df.resample("YE").last()
+performance_rate_df["return_rate"] = performance_rate_df["portfolio_value"].pct_change()
+performance_rate_df = performance_rate_df.join(interest_rates_df, how="inner").dropna()
+performance_rate_df["excess_return_rate"] = (
+    performance_rate_df["return_rate"] - performance_rate_df["annual_rate"]
+)
+
+fig_df = performance_rate_df[
+    ["return_rate", "annual_rate", "excess_return_rate"]
+].rename(
+    columns={
+        "return_rate": "Portfolio Return Rate",
+        "annual_rate": "Risk-Free Annual Rate",
+        "excess_return_rate": "Excess Return Rate",
+    }
+)
+fig = px.line(
+    fig_df,
+    x=fig_df.index.year,
+    y=fig_df.columns,
+    labels={
+        "x": "Year",
+        "value": "Rate",
+        "variable": "Type",
+    },
+)
+fig.update_layout(**fig_layout)
+st.plotly_chart(fig)
