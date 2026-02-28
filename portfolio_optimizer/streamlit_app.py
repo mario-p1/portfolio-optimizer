@@ -96,27 +96,33 @@ st.plotly_chart(fig)
 "### Portfolio Performance"
 """Your portfolio receives 10.000 €, invested at the beggining from the newest fund's starting date.
 The growth of the portfolio is calculated as the weighted average of the growth of each asset, according to the allocation you defined."""
-port_perf_df = compute_portfolio_growth_index(prices_df, portfolio_df)
-fig = px.line(port_perf_df)
+portfolio_performance_df = compute_portfolio_growth_index(prices_df, portfolio_df)
+fig = px.line(
+    portfolio_performance_df,
+    y="portfolio_value",
+    labels={"portfolio_value": "Portfolio Value", "date": "Date"},
+)
 fig.update_layout(**fig_layout, showlegend=False)
 
 st.plotly_chart(fig)
 
 "## Returns"
 "### Annual Returns"
-annual_returns_df = port_perf_df.resample("YE").last().pct_change().dropna() * 100
+annual_returns_df = (
+    portfolio_performance_df.resample("YE").last().pct_change().dropna() * 100
+)
 annual_returns_df.columns = ["annual_return"]
-annual_returns_df["Sign"] = (
-    annual_returns_df["annual_return"].ge(0).map({True: "Positive", False: "Negative"})
+annual_returns_df["sign"] = (
+    annual_returns_df["annual_return"].ge(0).map({True: "positive", False: "negative"})
 )
 
 fig = px.bar(
     annual_returns_df,
     x=annual_returns_df.index.year,
     y="annual_return",
-    color="Sign",
-    color_discrete_map={"Positive": "green", "Negative": "red"},
-    labels={"value": "Annual Return Rate (%)", "Date": "Year"},
+    color="sign",
+    color_discrete_map={"positive": "green", "negative": "red"},
+    labels={"value": "Annual Return Rate (%)", "date": "Year"},
 )
 fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
@@ -152,7 +158,7 @@ fig = px.bar(
     x="label",
     y="count",
     color="sign",
-    color_discrete_map={"Positive": "green", "Negative": "red"},
+    color_discrete_map={"positive": "green", "negative": "red"},
     labels={"count": "Number of Years", "label": "Annual Return Range (%)"},
 )
 

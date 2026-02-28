@@ -22,7 +22,7 @@ def compute_portfolio_growth_index(
         ascending=True
     )
     portfolio_growth_df = (
-        (portfolio_growth_df * allocation).sum(axis=1).to_frame(name="Portfolio Value")
+        (portfolio_growth_df * allocation).sum(axis=1).to_frame(name="portfolio_value")
     )
     portfolio_growth_df = (
         portfolio_growth_df * 10_000 / portfolio_growth_df.iloc[0]
