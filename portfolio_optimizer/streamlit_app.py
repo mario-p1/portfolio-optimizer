@@ -1,5 +1,3 @@
-import datetime
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -7,8 +5,11 @@ import streamlit as st
 from portfolio_optimizer.interest_data_service import load_risk_free_rates
 from portfolio_optimizer.market_data_service import get_prices_df, get_ticker_details
 from portfolio_optimizer.portfolio_metrics import (
+    bin_annual_returns,
+    compute_annual_excess_returns,
     compute_asset_growth_index,
     compute_portfolio_growth_index,
+    compute_sharpe_ratio,
 )
 
 fig_layout = {
@@ -132,62 +133,22 @@ st.plotly_chart(fig)
 
 
 "### Annual Returns Count"
-bin_by = 5
-min_annual_return = int(annual_returns_df["annual_return"].min() / bin_by - 1) * bin_by
-max_annual_return = int(annual_returns_df["annual_return"].max() / bin_by + 1) * bin_by
-
-bin_region = max(abs(min_annual_return), abs(max_annual_return))
-
-bins = list(range(-bin_region, bin_region + bin_by, bin_by))
-
-annual_bins = (
-    pd.cut(annual_returns_df["annual_return"], bins=bins, labels=bins[:-1])
-    .value_counts()
-    .sort_index()
-    .to_frame()
-    .reset_index()
-)
-
-annual_bins["sign"] = (
-    annual_bins["annual_return"].ge(0).map({True: "positive", False: "negative"})
-)
-annual_bins["label"] = annual_bins["annual_return"].map(
-    lambda x: f"{x} to {x + bin_by} %"
-)
-
+annual_bins_df = bin_annual_returns(annual_returns_df, bin_by=5)
 
 fig = px.bar(
-    annual_bins,
+    annual_bins_df,
     x="label",
     y="count",
     color="sign",
     color_discrete_map={"positive": "green", "negative": "red"},
     labels={"count": "Number of Years", "label": "Annual Return Range (%)"},
 )
-
-
 fig.update_layout(showlegend=False)
-
 st.plotly_chart(fig)
 
 "### Excess Return Rate vs Risk-Free Rate"
-interest_rates_df = load_risk_free_rates().rename(
-    columns={"annual_rate": "risk_free_annual_rate"}
-)
-
-annual_rates_df = annual_returns_df.copy().rename(
-    columns={"annual_return": "portfolio_return"}
-)
-annual_rates_df["portfolio_return"] = annual_rates_df["portfolio_return"].div(100)
-
-annual_rates_df = annual_rates_df.join(interest_rates_df, how="inner").dropna()
-annual_rates_df["excess_return_rate"] = (
-    annual_rates_df["portfolio_return"] - annual_rates_df["risk_free_annual_rate"]
-)
-
-annual_rates_df = annual_rates_df[
-    annual_rates_df.index.year < datetime.datetime.now().year
-]
+interest_rates_df = load_risk_free_rates()
+annual_rates_df = compute_annual_excess_returns(annual_returns_df, interest_rates_df)
 
 fig_df = (
     annual_rates_df[
@@ -215,10 +176,6 @@ fig.update_layout(**fig_layout)
 st.plotly_chart(fig)
 
 
-sharpe_ratio = (
-    annual_rates_df["excess_return_rate"].mean()
-    / annual_rates_df["portfolio_return"].std()
-)
-
+sharpe_ratio = compute_sharpe_ratio(annual_rates_df)
 
 f"#### Sharpe Ratio: {sharpe_ratio:.2f}"

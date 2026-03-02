@@ -11,6 +11,10 @@ def load_risk_free_rates():
     df["annual_rate"] = df["annual_rate"].div(100)
 
     # TODO: Use effective annual rates instead of average of the monthly rates
-    df = df.resample("YE")["annual_rate"].mean().to_frame()
-
+    df = (
+        df.resample("YE")["annual_rate"]
+        .mean()
+        .to_frame()
+        .rename(columns={"annual_rate": "risk_free_annual_rate"})
+    )
     return df
