@@ -34,9 +34,30 @@ fig.update_layout(**fig_layout)
 st.plotly_chart(fig)
 
 "### Portfolio Performance"
-"""Your portfolio receives 10.000 €, invested at the beggining from the newest fund's starting date.
+"""Your portfolio receives 10.000 €, invested at the beginning from the newest fund's starting date.
 The growth of the portfolio is calculated as the weighted average of the growth of each asset, according to the allocation you defined."""
 portfolio_performance_df = compute_portfolio_growth_index(prices_df, portfolio_df)
+
+interest_rates_df = load_risk_free_rates()
+annual_returns_df = (
+    portfolio_performance_df.resample("YE").last().pct_change().dropna() * 100
+)
+annual_returns_df.columns = ["annual_return"]
+annual_returns_df["sign"] = (
+    annual_returns_df["annual_return"].ge(0).map({True: "positive", False: "negative"})
+)
+annual_rates_df = compute_annual_excess_returns(annual_returns_df, interest_rates_df)
+sharpe_ratio = compute_sharpe_ratio(annual_rates_df)
+
+total_return = ((portfolio_performance_df.iloc[-1] / portfolio_performance_df.iloc[0]) - 1) * 100
+years = (portfolio_performance_df.index[-1] - portfolio_performance_df.index[0]).days / 365.25
+cagr = ((portfolio_performance_df.iloc[-1] / portfolio_performance_df.iloc[0]) ** (1 / years) - 1) * 100
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Return", f"{total_return['portfolio_value']:.1f}%")
+col2.metric("CAGR", f"{cagr['portfolio_value']:.1f}%")
+col3.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
+
 fig = px.line(
     portfolio_performance_df,
     y="portfolio_value",
@@ -50,13 +71,6 @@ st.plotly_chart(fig)
 
 "### Annual Returns"
 """Your portfolio's return rate is calculated as the percentage change of the portfolio value from one year to the next."""
-annual_returns_df = (
-    portfolio_performance_df.resample("YE").last().pct_change().dropna() * 100
-)
-annual_returns_df.columns = ["annual_return"]
-annual_returns_df["sign"] = (
-    annual_returns_df["annual_return"].ge(0).map({True: "positive", False: "negative"})
-)
 
 fig = px.bar(
     annual_returns_df,
@@ -64,9 +78,9 @@ fig = px.bar(
     y="annual_return",
     color="sign",
     color_discrete_map={"positive": "green", "negative": "red"},
-    labels={"value": "Annual Return Rate (%)", "date": "Year"},
+    labels={"annual_return": "Annual Return Rate (%)", "x": "Year"},
 )
-fig.update_layout(showlegend=False)
+fig.update_layout(**fig_layout, showlegend=False)
 st.plotly_chart(fig)
 
 
@@ -81,15 +95,13 @@ fig = px.bar(
     color_discrete_map={"positive": "green", "negative": "red"},
     labels={"count": "Number of Years", "label": "Annual Return Range (%)"},
 )
-fig.update_layout(showlegend=False)
+fig.update_layout(**fig_layout, showlegend=False)
 st.plotly_chart(fig)
 
 "### Excess Return Rate vs Risk-Free Rate"
 """The risk-free rate used is the average 3-month Euribor rate.
 The excess return rate is calculated as the difference between
 the portfolio's annual return rate and the risk-free annual rate."""
-interest_rates_df = load_risk_free_rates()
-annual_rates_df = compute_annual_excess_returns(annual_returns_df, interest_rates_df)
 
 fig_df = (
     annual_rates_df[
@@ -116,8 +128,6 @@ fig = px.line(
 fig.update_layout(**fig_layout)
 st.plotly_chart(fig)
 
-
-sharpe_ratio = compute_sharpe_ratio(annual_rates_df)
 
 "### Sharpe Ratio"
 "The Sharpe Ratio is a measure of an investment's risk-adjusted performance,\
