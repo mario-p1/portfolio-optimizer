@@ -89,3 +89,43 @@ def compute_sharpe_ratio(annual_rates_df: pd.DataFrame) -> float:
         annual_rates_df["excess_return_rate"].mean()
         / annual_rates_df["excess_return_rate"].std()
     )
+
+
+def compute_rolling_volatility(
+    portfolio_growth_df: pd.DataFrame,
+    windows: list[int] = (6, 12),
+) -> pd.DataFrame:
+    """Compute annualized rolling volatility of monthly portfolio returns.
+
+    windows: rolling window sizes in months.
+    Annualisation factor for monthly returns is sqrt(12).
+    """
+    monthly_returns = portfolio_growth_df["portfolio_value"].pct_change().dropna()
+    vol_df = pd.DataFrame(index=monthly_returns.index)
+    for w in windows:
+        vol_df[f"{w}m rolling volatility"] = (
+            monthly_returns.rolling(w).std() * (12**0.5) * 100
+        )
+    return vol_df.dropna(how="all")
+
+
+def compute_drawdown(portfolio_growth_df: pd.DataFrame) -> pd.DataFrame:
+    """Compute drawdown (%) from the running peak of portfolio value."""
+    values = portfolio_growth_df["portfolio_value"]
+    rolling_max = values.cummax()
+    drawdown = (values - rolling_max) / rolling_max * 100
+    return drawdown.to_frame(name="drawdown")
+
+
+def compute_max_drawdown(portfolio_growth_df: pd.DataFrame) -> float:
+    """Return the maximum drawdown (%) as a positive percentage."""
+    return abs(compute_drawdown(portfolio_growth_df)["drawdown"].min())
+
+
+def compute_downside_deviation(portfolio_growth_df: pd.DataFrame) -> float:
+    """Compute annualized downside deviation from monthly portfolio returns."""
+    monthly_returns = portfolio_growth_df["portfolio_value"].pct_change().dropna()
+    negative_returns = monthly_returns[monthly_returns < 0]
+    if negative_returns.empty:
+        return 0.0
+    return float((negative_returns**2).mean() ** 0.5 * (12**0.5) * 100)
