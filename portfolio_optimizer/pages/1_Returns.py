@@ -112,7 +112,7 @@ fig_df = annual_excess_df.rename(
 )
 fig = px.line(
     fig_df,
-    x=fig_df.index,
+    x=fig_df.index.year,
     y=fig_df.columns,
     labels={
         "x": "Year",
