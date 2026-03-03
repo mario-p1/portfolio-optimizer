@@ -131,7 +131,7 @@ st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
 "Where:"
 " - $R_p$: return of the portfolio"
 " - $R_f$: risk-free rate"
-" - $\sigma_p$: Standard deviation of the portfolio's excess return"
+" - $\\sigma_p$: Standard deviation of the portfolio's excess return"
 st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
 
 sharpe_table_df = pd.DataFrame(
