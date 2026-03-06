@@ -26,17 +26,24 @@ def get_prices_df(tickers: list[str]) -> pd.DataFrame:
     prices_df = pd.DataFrame()
     for ticker in tickers:
         history = (
-            get_price_history(ticker)["Close"]
-            .to_frame()
+            get_price_history(ticker)[["High", "Low", "Close"]]
             .reset_index(drop=False)
-            .rename(columns={"Date": "date", "Close": "close"})
+            .rename(
+                columns={"Date": "date", "Close": "close", "High": "high", "Low": "low"}
+            )
         )
 
         history["date"] = history["date"].dt.tz_convert(None)
         history = history.resample("ME", on="date").last()
 
         prices_df = prices_df.merge(
-            history["close"], left_index=True, right_index=True, how="outer"
-        ).rename(columns={"close": ticker})
+            history, left_index=True, right_index=True, how="outer"
+        ).rename(
+            columns={
+                "close": f"{ticker}_close",
+                "high": f"{ticker}_high",
+                "low": f"{ticker}_low",
+            }
+        )
 
     return prices_df
