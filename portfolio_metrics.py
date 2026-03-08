@@ -3,18 +3,6 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from utils import rename_ticker_columns_to_names
-
-
-def compute_asset_growth(
-    prices_df: pd.DataFrame, portfolio_df: pd.DataFrame
-) -> pd.DataFrame:
-    growth_df = prices_df.dropna(how="any")
-    growth_df = rename_ticker_columns_to_names(growth_df, portfolio_df)
-    growth_df = (growth_df * 10_000 / growth_df.iloc[0]).round(0)
-
-    return growth_df
-
 
 def compute_portfolio_growth(
     prices_df: pd.DataFrame, portfolio_df: pd.DataFrame, normalize_value: int = 1

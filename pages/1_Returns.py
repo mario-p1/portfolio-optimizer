@@ -5,11 +5,10 @@ import streamlit as st
 from interest_data_service import load_risk_free_rates
 from market_data_service import get_prices_df
 from portfolio_metrics import (
+    calculate_arr,
     calculate_return_bins,
     calculate_return_rates,
-    calculate_arr,
     compute_excess_returns,
-    compute_asset_growth,
     compute_portfolio_growth,
     compute_sharpe_ratio,
 )
@@ -18,7 +17,6 @@ from utils import (
     fig_layout,
     rename_ticker_columns_to_names,
 )
-
 
 ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
