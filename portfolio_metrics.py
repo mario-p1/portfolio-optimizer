@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pandas as pd
+import streamlit as st
 
 from utils import rename_ticker_columns_to_names
 
@@ -8,30 +9,28 @@ from utils import rename_ticker_columns_to_names
 def compute_asset_growth(
     prices_df: pd.DataFrame, portfolio_df: pd.DataFrame
 ) -> pd.DataFrame:
-    indv_growth_df = prices_df.dropna(how="any")
-    indv_growth_df = rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
-    indv_growth_df = (indv_growth_df * 10_000 / indv_growth_df.iloc[0]).round(0)
+    growth_df = prices_df.dropna(how="any")
+    growth_df = rename_ticker_columns_to_names(growth_df, portfolio_df)
+    growth_df = (growth_df * 10_000 / growth_df.iloc[0]).round(0)
 
-    return indv_growth_df
+    return growth_df
 
 
 def compute_portfolio_growth(
-    prices_df: pd.DataFrame, portfolio_df: pd.DataFrame
+    prices_df: pd.DataFrame, portfolio_df: pd.DataFrame, normalize_value: int = 1
 ) -> pd.DataFrame:
-    portfolio_growth_df = prices_df.dropna(how="any")
+    allocation = portfolio_df.set_index("ticker")["allocation"] / 100
 
-    allocation = (portfolio_df.set_index("ticker")["allocation"] / 100).sort_values(
-        ascending=True
-    )
-    portfolio_growth_df = (
-        (portfolio_growth_df * allocation).sum(axis=1).to_frame(name="portfolio_value")
-    )
+    growth_df = prices_df.dropna(how="any")
 
-    portfolio_growth_df = (
-        portfolio_growth_df * 10_000 / portfolio_growth_df.iloc[0]
-    ).round(0)
+    # Calculate asset growth
+    growth_df = growth_df.div(growth_df.iloc[0])
 
-    return portfolio_growth_df
+    growth_df["portfolio_growth"] = (growth_df * allocation).sum(axis=1)
+
+    growth_df = (growth_df * normalize_value / growth_df.iloc[0]).round(0)
+
+    return growth_df
 
 
 def calculate_return_rates(

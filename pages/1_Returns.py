@@ -13,7 +13,11 @@ from portfolio_metrics import (
     compute_portfolio_growth,
     compute_sharpe_ratio,
 )
-from utils import ensure_portfolio_configured, fig_layout
+from utils import (
+    ensure_portfolio_configured,
+    fig_layout,
+    rename_ticker_columns_to_names,
+)
 
 
 ensure_portfolio_configured()
@@ -26,12 +30,18 @@ prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 
 monthly_prices_df = prices_df.resample("ME").last()
 
+portfolio_growth_df = compute_portfolio_growth(
+    monthly_prices_df, portfolio_df, normalize_value=10_000
+)
+
 "### Comparative Asset Performance"
 """Each asset receives 10.000 €, invested at the same time,
 beginning from the newest fund's starting date."""
-indv_perf_df = compute_asset_growth(monthly_prices_df, portfolio_df)
 
-fig = px.line(indv_perf_df, labels={"variable": "Asset", "value": "Value"})
+indv_growth_df = portfolio_growth_df[portfolio_df["ticker"]]
+rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
+
+fig = px.line(indv_growth_df, labels={"variable": "Asset", "value": "Value"})
 fig.update_layout(**fig_layout)
 
 st.plotly_chart(fig)
@@ -39,11 +49,11 @@ st.plotly_chart(fig)
 "### Portfolio Performance"
 """Your portfolio receives 10.000 €, invested at the beggining from the newest fund's starting date.
 The growth of the portfolio is calculated as the weighted average of the growth of each asset, according to the allocation you defined."""
-portfolio_performance_df = compute_portfolio_growth(monthly_prices_df, portfolio_df)
+portfolio_performance_df = portfolio_growth_df[["portfolio_growth"]]
 fig = px.line(
     portfolio_performance_df,
-    y="portfolio_value",
-    labels={"portfolio_value": "Portfolio Value", "date": "Date"},
+    y="portfolio_growth",
+    labels={"portfolio_growth": "Portfolio Value", "date": "Date"},
 )
 fig.update_layout(**fig_layout, showlegend=False)
 
@@ -52,10 +62,10 @@ st.plotly_chart(fig)
 "## Annual Returns"
 """Your portfolio's return rate is calculated as the percentage change of the portfolio value from one year to the next."""
 annual_returns_df = calculate_return_rates(
-    portfolio_performance_df.resample("YE").last()["portfolio_value"]
+    portfolio_performance_df.resample("YE").last()["portfolio_growth"]
 )
 monthly_returns_df = calculate_return_rates(
-    portfolio_performance_df.resample("ME").last()["portfolio_value"]
+    portfolio_performance_df.resample("ME").last()["portfolio_growth"]
 )
 annualized_return = calculate_arr(annual_returns_df["return"])
 
