@@ -5,7 +5,7 @@ import pandas as pd
 from utils import rename_ticker_columns_to_names
 
 
-def compute_asset_growth_index(
+def compute_asset_growth(
     prices_df: pd.DataFrame, portfolio_df: pd.DataFrame
 ) -> pd.DataFrame:
     indv_growth_df = prices_df.dropna(how="any")
@@ -15,7 +15,7 @@ def compute_asset_growth_index(
     return indv_growth_df
 
 
-def compute_portfolio_growth_index(
+def compute_portfolio_growth(
     prices_df: pd.DataFrame, portfolio_df: pd.DataFrame
 ) -> pd.DataFrame:
     portfolio_growth_df = prices_df.dropna(how="any")

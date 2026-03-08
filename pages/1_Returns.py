@@ -9,8 +9,8 @@ from portfolio_metrics import (
     calculate_return_rates,
     calculate_arr,
     compute_excess_returns,
-    compute_asset_growth_index,
-    compute_portfolio_growth_index,
+    compute_asset_growth,
+    compute_portfolio_growth,
     compute_sharpe_ratio,
 )
 from utils import ensure_portfolio_configured, fig_layout
@@ -24,10 +24,12 @@ portfolio_df = st.session_state.portfolio_df
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 
+monthly_prices_df = prices_df.resample("ME").last()
+
 "### Comparative Asset Performance"
 """Each asset receives 10.000 €, invested at the same time,
 beginning from the newest fund's starting date."""
-indv_perf_df = compute_asset_growth_index(prices_df, portfolio_df)
+indv_perf_df = compute_asset_growth(monthly_prices_df, portfolio_df)
 
 fig = px.line(indv_perf_df, labels={"variable": "Asset", "value": "Value"})
 fig.update_layout(**fig_layout)
@@ -37,7 +39,7 @@ st.plotly_chart(fig)
 "### Portfolio Performance"
 """Your portfolio receives 10.000 €, invested at the beggining from the newest fund's starting date.
 The growth of the portfolio is calculated as the weighted average of the growth of each asset, according to the allocation you defined."""
-portfolio_performance_df = compute_portfolio_growth_index(prices_df, portfolio_df)
+portfolio_performance_df = compute_portfolio_growth(monthly_prices_df, portfolio_df)
 fig = px.line(
     portfolio_performance_df,
     y="portfolio_value",

@@ -17,7 +17,7 @@ def get_ticker_details(ticker):
 def get_price_history(ticker: str) -> pd.DataFrame:
     yticker = yf.Ticker(ticker)
 
-    history_df = yticker.history(period="max", interval="1mo")
+    history_df = yticker.history(period="max", interval="1d")
     return history_df
 
 
@@ -33,7 +33,7 @@ def get_prices_df(tickers: list[str]) -> pd.DataFrame:
         )
 
         history["date"] = history["date"].dt.tz_convert(None)
-        history = history.resample("ME", on="date").last()
+        history = history.resample("D", on="date").last()
 
         prices_df = prices_df.merge(
             history["close"], left_index=True, right_index=True, how="outer"
