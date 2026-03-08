@@ -9,10 +9,6 @@ def compute_asset_growth_index(
     prices_df: pd.DataFrame, portfolio_df: pd.DataFrame
 ) -> pd.DataFrame:
     indv_growth_df = prices_df.dropna(how="any")
-    indv_growth_df = indv_growth_df[portfolio_df["ticker"] + "_close"]
-
-    indv_growth_df.columns = [col.split("_")[0] for col in indv_growth_df.columns]
-
     indv_growth_df = rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
     indv_growth_df = (indv_growth_df * 10_000 / indv_growth_df.iloc[0]).round(0)
 
@@ -24,15 +20,11 @@ def compute_portfolio_growth_index(
 ) -> pd.DataFrame:
     portfolio_growth_df = prices_df.dropna(how="any")
 
-    portfolio_df = portfolio_df.copy()
-    portfolio_df["target_column"] = portfolio_df["ticker"] + "_close"
-
-    allocations = portfolio_df.set_index("target_column")["allocation"] / 100
-
+    allocation = (portfolio_df.set_index("ticker")["allocation"] / 100).sort_values(
+        ascending=True
+    )
     portfolio_growth_df = (
-        (portfolio_growth_df[portfolio_df["target_column"].to_list()] * allocations)
-        .sum(axis=1)
-        .to_frame(name="portfolio_value")
+        (portfolio_growth_df * allocation).sum(axis=1).to_frame(name="portfolio_value")
     )
 
     portfolio_growth_df = (
