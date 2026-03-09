@@ -91,8 +91,11 @@ def compute_drawdown_df(growth_series: pd.Series) -> pd.DataFrame:
     drawdown_df = growth_series.to_frame("growth")
 
     drawdown_df["max_to_date"] = drawdown_df["growth"].expanding().max()
-    drawdown_df["drawdown"] = drawdown_df["max_to_date"] - drawdown_df["growth"]
-    drawdown_df["drawdown"] = drawdown_df["drawdown"] * -100
+    drawdown_df["drawdown"] = (
+        (drawdown_df["growth"] - drawdown_df["max_to_date"])
+        / drawdown_df["max_to_date"]
+        * 100
+    )
 
     drawdown_df = drawdown_df.resample("ME").max()
 
