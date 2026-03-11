@@ -5,8 +5,8 @@ import streamlit as st
 from interest_data_service import load_risk_free_rates
 from market_data_service import get_prices_df
 from portfolio_metrics import (
+    bin_series,
     calculate_arr,
-    calculate_return_bins,
     calculate_return_rates,
     compute_excess_returns,
     compute_portfolio_growth,
@@ -82,7 +82,9 @@ st.plotly_chart(fig)
 
 
 "### Annual Returns Count"
-annual_bins_df = calculate_return_bins(annual_returns_df["return"], bin_by=5)
+annual_bins_df = bin_series(
+    annual_returns_df["return"], bin_by=5, label_suffix=" %", cutoff_bins=False
+)
 
 fig = px.bar(
     annual_bins_df,

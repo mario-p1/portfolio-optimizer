@@ -1,5 +1,5 @@
-from datetime import datetime
 import math
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
@@ -37,30 +37,45 @@ def calculate_return_rates(
     return return_rates_df
 
 
-def calculate_return_bins(return_rates_series: pd.Series, bin_by: int) -> pd.DataFrame:
-    min_annual_return = int(return_rates_series.min() / bin_by - 1) * bin_by
-    max_annual_return = int(return_rates_series.max() / bin_by + 1) * bin_by
+def bin_series(
+    series: pd.Series,
+    bin_by: int,
+    label_suffix: str = "",
+    sign_threshold: float = 0,
+    cutoff_bins: bool = True,
+) -> pd.DataFrame:
+    min_value = int(series.min() / bin_by - 1) * bin_by
+    max_value = int(series.max() / bin_by + 1) * bin_by
 
-    bin_region = max(abs(min_annual_return), abs(max_annual_return))
+    bin_region = max(abs(min_value), abs(max_value))
 
     bins = list(range(-bin_region, bin_region + bin_by, bin_by))
 
-    annual_bins = (
-        pd.cut(return_rates_series, bins=bins, labels=bins[:-1])
+    bins_df = (
+        pd.cut(series, bins=bins, labels=bins[:-1])
         .value_counts()
         .sort_index()
         .to_frame()
-        .reset_index(names="return_bin_left")
+        .reset_index(names="bin_left")
     )
 
-    annual_bins["sign"] = (
-        annual_bins["return_bin_left"].ge(0).map({True: "positive", False: "negative"})
+    bins_df["bin_left"] = bins_df["bin_left"].astype(int)
+    if cutoff_bins:
+        bins_df = bins_df[
+            bins_df["bin_left"].ge(series.min() - bin_by)
+            & bins_df["bin_left"].le(series.max() + bin_by)
+        ]
+
+    bins_df["sign"] = (
+        bins_df["bin_left"]
+        .ge(sign_threshold)
+        .map({True: "positive", False: "negative"})
     )
-    annual_bins["label"] = annual_bins["return_bin_left"].map(
-        lambda x: f"{x} to {x + bin_by} %"
+    bins_df["label"] = bins_df["bin_left"].map(
+        lambda x: f"{x} to {x + bin_by}{label_suffix}"
     )
 
-    return annual_bins
+    return bins_df
 
 
 def compute_excess_returns(
