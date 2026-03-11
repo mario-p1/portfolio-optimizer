@@ -85,7 +85,6 @@ with right_col:
 final_bins = bin_series(
     final_day_forecast["value"], bin_by=1_000, sign_threshold=start_value
 )
-st.write(final_bins)
 
 fig = px.bar(
     final_bins,
