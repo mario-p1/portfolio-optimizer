@@ -38,7 +38,7 @@ with left_col:
 with right_col:
     st.metric("Standard deviation of daily returns", f"{std:.4%}", border=True)
 
-days = 360
+days = st.session_state["days_slider"] if "days_slider" in st.session_state else 180
 num_simulations = 10_000
 start_value = 10_000
 
@@ -56,6 +56,16 @@ based on the historical mean and standard deviation of daily returns.
 
 For practical purposes, only 25 simulated paths are shown in the plot below.
 """
+
+st.slider(
+    "Days to Forecast",
+    min_value=30,
+    max_value=360,
+    value=days,
+    key="days_slider",
+    step=10,
+)
+
 fig = px.line(
     forecast[:25, :].T,
     labels={"index": "Days", "value": "Simulated Portfolio Value"},
