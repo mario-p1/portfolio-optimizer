@@ -2,8 +2,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from market_data_service import get_ticker_details
-from utils import load_value, store_value
+from portfolio_analyzer.market_data_service import get_ticker_details
+from portfolio_analyzer.utils import load_value, store_value
+
 
 if "tickers" not in st.session_state.to_dict():
     st.session_state["tickers"] = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
@@ -13,7 +14,7 @@ if "tickers" not in st.session_state.to_dict():
     st.session_state["allocation_EUNM.DE"] = 10
 
 
-"# Portfolio Optimizer - Configuration"
+"# Portfolio Configuration"
 
 load_value("tickers")
 st.text_input(

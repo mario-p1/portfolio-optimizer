@@ -1,7 +1,7 @@
 [project]
-name = "portfolio-optimizer"
+name = "portfolio-analyzer"
 version = "0.1.0"
-description = "Add your description here"
+description = "Interactive Streamlit app for portfolio risk and return analysis and Monte Carlo forecasting"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

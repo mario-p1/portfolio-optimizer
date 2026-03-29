@@ -7,8 +7,8 @@ This project is a **experimental tool** created for learning and demonstration p
 The models and results provided may be simplified and are not guaranteed to be accurate.
 Use at your own risk.
 
-# Portfolio Optimization
-Portfolio Optimizer is an interactive web application for analyzing, visualizing, and forecasting investment portfolio performance.
+# Portfolio Analyzer
+Portfolio Analyzer is an interactive web application for analyzing, visualizing, and forecasting investment portfolio performance.
 Built with Streamlit, it allows users to configure their own portfolios, fetch historical market data, and perform comprehensive return and risk analyses.
 
 ## Key features
@@ -23,7 +23,7 @@ Built with Streamlit, it allows users to configure their own portfolios, fetch h
 The application is organized as follows:
 
 - `pyproject.toml`: Project configuration and dependencies.
-- `Configuration.py`: Streamlit page for portfolio setup and asset allocation.
+- `Configuration.py`: Streamlit entry page - portfolio setup and asset allocation.
 - `pages/`: Contains the main Streamlit analysis pages:
   - `1_Returns.py`: Analyzes and visualizes historical returns, growth, and Sharpe ratio.
   - `2_Risks.py`: Computes and visualizes risk metrics such as drawdown and Value at Risk.

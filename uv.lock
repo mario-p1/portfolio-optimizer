@@ -532,7 +532,7 @@ wheels = [
 ]
 
 [[package]]
-name = "portfolio-optimizer"
+name = "portfolio-analyzer"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

@@ -4,17 +4,17 @@ import plotly.express as px
 import streamlit as st
 from scipy.stats import norm
 
-from market_data_service import get_prices_df
-from portfolio_metrics import (
+from portfolio_analyzer.market_data_service import get_prices_df
+from portfolio_analyzer.metrics import (
     bin_series,
     compute_portfolio_growth,
 )
-from utils import ensure_portfolio_configured, fig_layout
+from portfolio_analyzer.utils import ensure_portfolio_configured, fig_layout
 
 ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
-"# Portfolio Optimizer - Forecast"
+"# Portfolio Forecast"
 """Uses Monte Carlo Simulation to forecast the future performance of your portfolio,
 based on the historical returns of its assets."""
 

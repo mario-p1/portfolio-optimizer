@@ -1,20 +1,18 @@
-import math
-
 import plotly.express as px
 import streamlit as st
 
-from market_data_service import get_prices_df
-from portfolio_metrics import (
+from portfolio_analyzer.market_data_service import get_prices_df
+from portfolio_analyzer.metrics import (
     compute_drawdown_df,
     compute_portfolio_growth,
     compute_value_at_risk,
 )
-from utils import ensure_portfolio_configured, fig_layout
+from portfolio_analyzer.utils import ensure_portfolio_configured, fig_layout
 
 ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
-"# Portfolio Optimizer - Risks Analysis"
+"# Portfolio Risks Analysis"
 "## Maximum Drawdown"
 """Maximum drawdown represents the maximum observed loss from a peak to a trough of a portfolio, before a new peak is attained.
 It is an indicator of downside risk over a specified time period."""

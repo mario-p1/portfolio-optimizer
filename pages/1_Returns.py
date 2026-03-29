@@ -2,9 +2,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from interest_data_service import load_risk_free_rates
-from market_data_service import get_prices_df
-from portfolio_metrics import (
+from portfolio_analyzer.interest_data_service import load_risk_free_rates
+from portfolio_analyzer.market_data_service import get_prices_df
+from portfolio_analyzer.metrics import (
     bin_series,
     calculate_arr,
     calculate_return_rates,
@@ -12,7 +12,7 @@ from portfolio_metrics import (
     compute_portfolio_growth,
     compute_sharpe_ratio,
 )
-from utils import (
+from portfolio_analyzer.utils import (
     ensure_portfolio_configured,
     fig_layout,
     rename_ticker_columns_to_names,
@@ -21,7 +21,7 @@ from utils import (
 ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
-"# Portfolio Optimizer - Returns Analysis"
+"# Portfolio Returns Analysis"
 "## Growth Index"
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
