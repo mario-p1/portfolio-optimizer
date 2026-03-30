@@ -38,53 +38,48 @@ All allocations must add up to 100%.
 Note: You can add or remove assets dynamically.
 The app will automatically fetch asset details and validate your inputs.
 """
-
-if st.session_state.get("portfolio_df") is not None:
-    portfolio_df = st.session_state.portfolio_df
-else:
-    portfolio_df = pd.DataFrame(
+portfolio_df = st.session_state.get(
+    "portfolio_df",
+    pd.DataFrame(
         {
             "ticker": ["IUSQ.DE", "EUNL.DE", "IUSN.DE", "EUNM.DE"],
-            "name": [np.nan] * 4,
-            "currency": [np.nan] * 4,
             "allocation": [50, 30, 10, 10],
         }
-    )
+    ),
+)
+portfolio_df.index = pd.RangeIndex(start=1, stop=len(portfolio_df) + 1, step=1)
 
 new_portfolio_df = st.data_editor(
-    portfolio_df,
+    portfolio_df[["ticker", "allocation"]],
     num_rows="dynamic",
     column_config={
         "ticker": st.column_config.TextColumn("Ticker"),
-        "name": st.column_config.TextColumn("Name", disabled=True),
-        "currency": st.column_config.TextColumn("Currency", disabled=True),
         "allocation": st.column_config.NumberColumn(
             "Allocation (%)", min_value=0, max_value=100, step=1
         ),
     },
 )
 
-try:
-    new_portfolio_df["name"] = new_portfolio_df["ticker"].apply(
-        lambda x: get_ticker_details(x)["name"] if pd.notna(x) else np.nan
+portfolio_df = new_portfolio_df.copy()
+
+if portfolio_df["allocation"].sum() != 100:
+    st.error(
+        f"Sum of allocation accross all assets must be 100, current sum is: {portfolio_df['allocation'].sum()}"
     )
-    new_portfolio_df["currency"] = new_portfolio_df["ticker"].apply(
-        lambda x: get_ticker_details(x)["currency"] if pd.notna(x) else np.nan
+    st.stop()
+
+try:
+    portfolio_df["name"] = portfolio_df["ticker"].apply(
+        lambda x: get_ticker_details(x)["name"]
+    )
+    portfolio_df["currency"] = portfolio_df["ticker"].apply(
+        lambda x: get_ticker_details(x)["currency"]
     )
 except Exception as e:
     st.error(str(e))
     st.stop()
 
-if new_portfolio_df["allocation"].sum() != 100:
-    st.error(
-        f"Sum of allocation accross all assets must be 100, current sum is: {new_portfolio_df['allocation'].sum()}"
-    )
-    st.stop()
-
-st.session_state["portfolio_df"] = new_portfolio_df
-
-if not portfolio_df.equals(new_portfolio_df):
-    st.rerun()
+st.session_state["portfolio_df"] = portfolio_df
 
 "# Portfolio Summary"
 "## Asset Allocation"
