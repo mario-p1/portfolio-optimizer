@@ -3,7 +3,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from portfolio_analyzer.market_data_service import get_ticker_details
+from portfolio_analyzer.market_data_service import get_prices_df, get_ticker_details
+from portfolio_analyzer.metrics import calculate_return_rates, compute_portfolio_growth
+from portfolio_analyzer.utils import rename_ticker_columns_to_names
 
 "# Portfolio Analyzer"
 "## Disclaimer"
