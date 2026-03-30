@@ -93,3 +93,24 @@ fig = px.pie(portfolio_df, values="allocation", names="name", hole=0.3)
 fig.update_traces(textinfo="label+percent")
 fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
+
+"## Asset Correlations"
+prices_df = get_prices_df(portfolio_df["ticker"].tolist())
+
+monthly_prices_df = prices_df.resample("ME").last()
+
+portfolio_growth_df = compute_portfolio_growth(
+    monthly_prices_df, portfolio_df, normalize_value=10_000
+).round(0)
+
+indv_growth_df = portfolio_growth_df[portfolio_df["ticker"]]
+indv_growth_df = rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
+
+for col in indv_growth_df.columns:
+    indv_growth_df[col] = calculate_return_rates(indv_growth_df[col])["return"]
+
+corr_df = indv_growth_df.corr()
+
+fig = px.imshow(corr_df)
+
+st.plotly_chart(fig)
