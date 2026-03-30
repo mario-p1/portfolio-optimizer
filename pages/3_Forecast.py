@@ -15,9 +15,19 @@ ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
 "# Portfolio Forecast"
-"""Uses Monte Carlo Simulation to forecast the future performance of your portfolio,
-based on the historical returns of its assets."""
+"""
+This tool uses a Monte Carlo simulation to project your portfolio's future value,
+drawing on the historical daily returns of your selected assets
 
+Explore the distribution of these past returns below, and adjust
+the forecast timeframe to visualize potential future paths.
+"""
+
+"## Daily Returns Distribution"
+"""
+This chart visualizes the distribution of your historical daily returns,
+overlaid with the fitted normal curve that powers the forecast.
+"""
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 portfolio_growth_df = compute_portfolio_growth(prices_df, portfolio_df)
@@ -27,12 +37,60 @@ daily_returns_df = portfolio_growth_df.pct_change().dropna(how="any")
 mean = daily_returns_df["portfolio_growth"].mean()
 std = daily_returns_df["portfolio_growth"].std()
 
-
 left_col, right_col = st.columns(2)
 with left_col:
     st.metric("Mean daily return", f"{mean:.4%}", border=True)
 with right_col:
     st.metric("Standard deviation of daily returns", f"{std:.4%}", border=True)
+
+bin_region = daily_returns_df["portfolio_growth"].quantile(0.999) * 100
+
+daily_bins_df = (
+    pd.cut(
+        daily_returns_df["portfolio_growth"] * 100,
+        # bins=50,
+        bins=np.arange(-bin_region, bin_region, 0.1),
+    )
+    .value_counts()
+    .sort_index()
+    .to_frame(name="count")
+    .reset_index(names="bin")
+)
+
+
+normal_dist_df = pd.DataFrame(
+    {"value": norm.rvs(loc=mean * 100, scale=std * 100, size=100_000)}
+)
+
+
+normal_dist_bins = (
+    pd.cut(normal_dist_df["value"], bins=daily_bins_df["bin"].cat.categories)
+    .value_counts()
+    .sort_index()
+    .to_frame(name="count")
+    .reset_index(names="bin")
+)
+
+
+fig = px.bar(
+    x=daily_bins_df["bin"].apply(lambda x: x.mid),
+    y=daily_bins_df["count"] / daily_bins_df["count"].sum(),
+    labels={"x": "Daily Return", "y": "Frequency"},
+    color_discrete_sequence=["orange"],
+)
+fig.update_traces(name="Historical Returns", showlegend=True)
+fig.add_scatter(
+    x=normal_dist_bins["bin"].apply(lambda x: x.mid),
+    y=normal_dist_bins["count"] / normal_dist_bins["count"].sum(),
+    mode="markers",
+    line={"color": "black", "shape": "spline", "smoothing": 1.3},
+    name="Fitted Normal Distribution",
+)
+fig.update_layout(**fig_layout, showlegend=True)
+st.plotly_chart(fig)
+
+
+"## Monte Carlo Simulation"
 
 days = st.session_state["days_slider"] if "days_slider" in st.session_state else 180
 num_simulations = 10_000
@@ -45,7 +103,6 @@ returns = norm.rvs(loc=mean, scale=std, size=(num_simulations, days))
 forecast = start_values * (1 + returns).cumprod(axis=1)
 forecast = np.hstack([start_values, forecast])
 
-"## Monte Carlo Simulation"
 f"""The Monte Carlo simulation was performed by simulating {num_simulations} possible future
 paths of the portfolio value over the next {days} days,
 based on the historical mean and standard deviation of daily returns.
