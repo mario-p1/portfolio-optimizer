@@ -169,3 +169,21 @@ sharpe_table_df = pd.DataFrame(
 )
 "Sharpe Ratio Interpretation:"
 st.dataframe(sharpe_table_df, hide_index=True)
+
+"## Returns Correlations"
+"""
+Correlation measures how the returns of different assets in your portfolio move in relation to each other.
+A higher correlation means two assets' returns tend to move in the same direction,
+while a lower correlation means they move more independently.
+
+Lower correlations between assets can help reduce overall portfolio risk and improve diversification.
+"""
+indv_returns_df = indv_growth_df.copy()
+
+for col in indv_growth_df.columns:
+    indv_returns_df[col] = calculate_return_rates(indv_returns_df[col])["return"]
+
+corr_df = indv_returns_df.corr()
+
+fig = px.imshow(corr_df)
+st.plotly_chart(fig)

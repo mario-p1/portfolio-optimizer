@@ -42,11 +42,12 @@ The total allocation across all assets must sum to 100%.
 """
 
 if "tickers" not in st.session_state.to_dict():
-    st.session_state["tickers"] = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
-    st.session_state["allocation_IUSQ.DE"] = 50
-    st.session_state["allocation_EUNL.DE"] = 30
-    st.session_state["allocation_IUSN.DE"] = 10
-    st.session_state["allocation_EUNM.DE"] = 10
+    st.session_state["tickers"] = "IUSQ.DE;EUNA.DE;EUNL.DE;IUSN.DE;EUNM.DE"
+    st.session_state["allocation_IUSQ.DE"] = 40
+    st.session_state["allocation_EUNA.DE"] = 40
+    st.session_state["allocation_EUNL.DE"] = 10
+    st.session_state["allocation_IUSN.DE"] = 5
+    st.session_state["allocation_EUNM.DE"] = 5
 
 
 load_value("tickers")
@@ -104,25 +105,4 @@ st.session_state["portfolio_df"] = portfolio_df
 fig = px.pie(portfolio_df, values="allocation", names="name", hole=0.3)
 fig.update_traces(textinfo="label+percent")
 fig.update_layout(showlegend=False)
-st.plotly_chart(fig)
-
-"## Asset Correlations"
-prices_df = get_prices_df(portfolio_df["ticker"].tolist())
-
-monthly_prices_df = prices_df.resample("ME").last()
-
-portfolio_growth_df = compute_portfolio_growth(
-    monthly_prices_df, portfolio_df, normalize_value=10_000
-).round(0)
-
-indv_growth_df = portfolio_growth_df[portfolio_df["ticker"]]
-indv_growth_df = rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
-
-for col in indv_growth_df.columns:
-    indv_growth_df[col] = calculate_return_rates(indv_growth_df[col])["return"]
-
-corr_df = indv_growth_df.corr()
-
-fig = px.imshow(corr_df)
-
 st.plotly_chart(fig)
