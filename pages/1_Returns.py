@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from portfolio_analyzer.interest_data_service import load_risk_free_rates
@@ -154,21 +155,47 @@ Where:
  
 The Sharpe Ratio is calculated from monthly excess returns."""
 
-st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
+# st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
 
 sharpe_table_df = pd.DataFrame(
     {
-        "Sharpe Ratio": ["< 1", "1 - 1.99", "2 - 2.99", "> 3"],
-        "Interpretation": [
+        "start": [-1, 1, 2, 3],
+        "end": [1, 2, 3, 5],
+        "interpretation": [
             "Bad",
             "Adequate/good",
             "Very good",
             "Excellent",
         ],
+        "color": ["red", "orange", "lightgreen", "green"],
     }
 )
-"Sharpe Ratio Interpretation:"
-st.dataframe(sharpe_table_df, hide_index=True)
+sharpe_table_df["center"] = (sharpe_table_df["start"] + sharpe_table_df["end"]) / 2
+sharpe_table_df["width"] = sharpe_table_df["end"] - sharpe_table_df["start"]
+
+
+# sharpe_ratio = 1.5
+fig = go.Figure(
+    data=go.Bar(
+        x=sharpe_table_df["center"],
+        width=sharpe_table_df["width"],
+        y=[1] * 4,
+        marker_color=sharpe_table_df["color"],
+        text=sharpe_table_df["interpretation"],
+        insidetextanchor="middle",
+    ),
+)
+fig.add_vline(x=sharpe_ratio, line_width=3, line_dash="dash", line_color="white")
+fig.add_annotation(
+    x=sharpe_ratio,
+    y=1,
+    text=f"Your Sharpe Ratio: {sharpe_ratio:.2f}",
+    font=dict(color="black", size=16),
+)
+fig.update_yaxes(visible=False)
+fig.update_layout(height=350)
+
+st.plotly_chart(fig)
 
 "## Returns Correlations"
 """
