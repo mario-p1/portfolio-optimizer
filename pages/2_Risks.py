@@ -1,5 +1,6 @@
 import plotly.express as px
 import streamlit as st
+import pandas as pd
 
 from portfolio_analyzer.market_data_service import get_prices_df
 from portfolio_analyzer.metrics import (
@@ -75,30 +76,43 @@ var_annual_99 = compute_value_at_risk(
     monthly_growth_df["monthly_return"], confidence_level=0.99, scale=12
 )
 
-left_col, right_col = st.columns(2)
-with left_col:
-    st.metric(
-        label="Monthly VaR (95%)",
-        value=f"{var_monthly_95:.2f} %",
-        border=True,
-    )
-with right_col:
-    st.metric(
-        label="Monthly VaR (99%)",
-        value=f"{var_monthly_99:.2f} %",
-        border=True,
-    )
+monthly_var_df = pd.DataFrame(
+    {
+        "Confidence Level": ["95%", "99%"],
+        "Monthly VaR (%)": [var_monthly_95, var_monthly_99],
+    }
+)
+annual_var_df = pd.DataFrame(
+    {
+        "Confidence Level": ["95%", "99%"],
+        "Annual VaR (%)": [var_annual_95, var_annual_99],
+    }
+)
 
 left_col, right_col = st.columns(2)
+
 with left_col:
-    st.metric(
-        label="Annual VaR (95%)",
-        value=f"{var_annual_95:.2f} %",
-        border=True,
+    "### Monthly Value at Risk"
+    fig = px.bar(
+        monthly_var_df,
+        x="Confidence Level",
+        y="Monthly VaR (%)",
+        color="Confidence Level",
+        color_discrete_map={"95%": "orange", "99%": "red"},
     )
+    fig.update_traces(texttemplate="%{y:.2f}%", textposition="outside")
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig)
+
 with right_col:
-    st.metric(
-        label="Annual VaR (99%)",
-        value=f"{var_annual_99:.2f} %",
-        border=True,
+    "### Annual Value at Risk"
+    fig = px.bar(
+        annual_var_df,
+        x="Confidence Level",
+        y="Annual VaR (%)",
+        color="Confidence Level",
+        color_discrete_map={"95%": "orange", "99%": "red"},
     )
+    fig.update_traces(texttemplate="%{y:.2f}%", textposition="outside")
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig)
