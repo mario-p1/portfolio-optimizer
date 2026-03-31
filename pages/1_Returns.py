@@ -241,7 +241,7 @@ Mixing assets that don't move in lockstep is the key to smoothing out volatility
 reducing your overall risk, and building a truly diversified portfolio.
 """
 indv_returns_df = indv_growth_df.copy()
-indv_returns_df = rename_ticker_columns_to_names(indv_returns_df, portfolio_df, "name")
+indv_returns_df = rename_ticker_columns_to_names(indv_returns_df, portfolio_df)
 for col in indv_returns_df.columns:
     indv_returns_df[col] = calculate_return_rates(indv_returns_df[col])["return"]
 
